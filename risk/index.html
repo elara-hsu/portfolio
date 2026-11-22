@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>許馨｜供應鏈風險預警作品｜半導體供應鏈風險監測站</title>
+  <meta name="description" content="半導體供應鏈外部事件風險監控與預警系統（Google Sheets＋Apps Script S6-v1.5）的互動作品集網站：39 筆事件、四維加權評分、五項正式候選條件與 Gmail 草稿安全機制。">
+  <meta property="og:title" content="許馨｜供應鏈風險預警作品">
+  <meta property="og:description" content="半導體供應鏈外部事件風險監控與預警系統（Google Sheets＋Apps Script S6-v1.5）的互動作品集網站：39 筆事件、四維加權評分、五項正式候選條件與 Gmail 草稿安全機制。">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='18' rx='16' ry='6.5' transform='rotate(-24 18 18)' fill='none' stroke='%23A84870' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='9.5' fill='%2333303A'/%3E%3Ccircle cx='30.4' cy='11.5' r='2.4' fill='%23EBC3CF'/%3E%3C/svg%3E">
+  
+  
+  
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/home.css">
+  <link rel="stylesheet" href="assets/motion.css">
+</head>
+<body data-page="home">
+  <a class="skip" href="#attention">跳到優先風險</a>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="index.html">
+        <svg viewBox="0 0 36 36" aria-hidden="true" class="brand-mark"><ellipse class="bm-orbit" cx="18" cy="18" rx="16" ry="6.5" transform="rotate(-24 18 18)"/><circle class="bm-wafer" cx="18" cy="18" r="9.5"/><path class="bm-grid" d="M13 15h10M13 18h10M13 21h10M15 13v10M18 13v10M21 13v10"/><circle class="bm-dot" cx="30.4" cy="11.5" r="2"/></svg>
+        <span class="brand-text"><b class="brand-line"><span>許馨</span><i class="brand-sep" aria-hidden="true">|</i><span>供應鏈風險預警作品</span></b><small class="brand-site">半導體供應鏈風險監測站</small></span>
+      </a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="site-nav" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>選單</button>
+      <nav class="nav" id="site-nav" aria-label="主要導覽">
+        <a href="index.html" data-nav="home" aria-current="page">決策總覽</a><a href="app.html#/events" data-nav="events">事件情報</a><a href="#signal-band" data-nav="map">風險版圖</a><a href="app.html#/triage" data-nav="triage">候選判定</a><a href="app.html#/method" data-nav="method">方法與治理</a><a href="app.html#/simulate" data-nav="simulate" class="nav-secondary">草稿模擬</a><a href="app.html#/log" data-nav="log" class="nav-secondary">通知紀錄</a>
+      </nav>
+      <div class="top-right">
+        <label><span class="sr">語言 Language</span><select id="home-lang" title="English 版本為系統頁（事件資料庫、候選判定等）"><option value="zh-Hant" selected>繁體中文</option><option value="en">English</option></select></label>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ================= 首屏 ================= -->
+    <div class="wrap">
+      <section class="hero" aria-labelledby="brief-title">
+        <div class="brief">
+          <p class="eyebrow">決策總覽 · 資料快照<span class="sr" id="snap-date"></span></p>
+          <h1 id="brief-title"><span id="h1-total">39</span> 筆監測事件，依本次快照收斂為 <em>1 件</em>建議優先事件</h1>
+          <ol class="funnel" id="funnel" aria-label="決策收斂：監測、正式候選、優先關注、建議優先處理"></ol>
+          <a class="hero-kpi" id="hero-kpi" href="#impact" aria-label="查看資料檢核指標"></a>
+          <article class="decision" id="decision" aria-labelledby="decision-title"></article>
+          <p class="safe-line" id="safe-line"></p>
+        </div>
+
+        <section class="space" aria-labelledby="space-title">
+          <div class="space-head">
+            <div>
+              <p class="space-title" id="space-title">WAFER PULSE · 39 事件訊號</p>
+              <p>每顆 die 代表 1 筆事件，越靠近中心，目前分數越高</p>
+            </div>
+          </div>
+          <div class="filters" role="group" aria-label="風險篩選" id="filters"></div>
+          <p class="sr" role="status" id="filter-status"></p>
+          <svg class="wafer-svg focus-on" id="wafer" viewBox="0 0 640 600" role="group" aria-label="晶圓風險圖：39 筆事件依目前分數由中心向外排列。使用方向鍵逐筆瀏覽。"></svg>
+          <p class="sel-strip" id="sel-strip" aria-live="polite"></p>
+          <ol class="focus-list" id="focus-list" aria-label="動畫結束後聚焦的三筆優先事件"></ol>
+          <div class="legend" id="legend"></div>
+        </section>
+      </section>
+    </div>
+
+    <!-- ================= 專案成果：KPI ＋ ROI ================= -->
+    <section class="band band-impact" id="impact" aria-labelledby="impact-title">
+      <div class="wrap">
+        <div class="sec-head"><div><p class="kicker-line">DATA CHECK</p><h2 id="impact-title">這批資料做了哪些檢查</h2>
+          <p>以下數字都取自 39 筆公開事件的資料快照，只描述系統實際處理了什麼，不推估導入效益。</p></div></div>
+        <ol class="kpi-grid" id="kpi-grid" aria-label="專案成果指標"></ol>
+        <div class="roi" hidden style="display:none">
+          <div class="roi-out" aria-live="polite">
+            <p class="kicker-line">ROI · 導入效益試算</p>
+            <p class="roi-big"><b class="num" id="roi-hours">0</b><span>小時／月　預估節省工時</span></p>
+            <div class="roi-bars" aria-hidden="true">
+              <div class="rb"><span>導入前</span><div class="rb-track"><i class="rb-fill rb-before" id="rb-before"></i></div><b class="num" id="rb-before-v"></b></div>
+              <div class="rb"><span>導入後</span><div class="rb-track"><i class="rb-fill rb-after" id="rb-after"></i></div><b class="num" id="rb-after-v"></b></div>
+            </div>
+            <dl class="roi-stats">
+              <div><dt>預估年度等值效益</dt><dd class="num" id="roi-year">NT$ 0</dd></div>
+              <div><dt>首年預估 ROI</dt><dd class="num" id="roi-firstyear">0%</dd></div>
+              <div><dt>預估回收期</dt><dd class="num" id="roi-payback">—</dd></div>
+              <div class="sr"><dt>單件工時降幅</dt><dd id="roi-pct">0%</dd></div>
+            </dl>
+            <p class="roi-note"><b>導入效益試算</b>：依每月 120 件、單件處理時間由 30 分鐘降至 10 分鐘、人力成本每小時 750 元、導入成本 12 萬元估算。每月節省工時 ＝ 件數 ×（30 − 10）÷ 60；首年 ROI ＝（年度等值效益 − 導入成本）÷ 導入成本。調整右側參數即可重算。</p>
+          </div>
+          <form class="roi-form" id="roi-form" aria-label="效益估算參數">
+            <label><span>每月處理量</span><input id="roi-events" type="number" min="0" step="10" value="120" inputmode="numeric"><small>件</small></label>
+            <label><span>導入前人工作業</span><input id="roi-manual" type="number" min="0" step="5" value="30" inputmode="numeric"><small>分鐘／件</small></label>
+            <label><span>導入後作業</span><input id="roi-review" type="number" min="0" step="5" value="10" inputmode="numeric"><small>分鐘／件</small></label>
+            <label><span>人力成本</span><input id="roi-wage" type="number" min="0" step="50" value="750" inputmode="numeric"><small>元／小時</small></label>
+            <label><span>導入成本</span><input id="roi-cost" type="number" min="0" step="10000" value="120000" inputmode="numeric"><small>元（一次性）</small></label>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Executive Attention ================= -->
+    <section class="band" id="attention" aria-labelledby="att-title">
+      <div class="wrap">
+        <div class="sec-head">
+          <div><p class="kicker-line">01 · TOP 3</p><h2 id="att-title">排序前三的事件</h2>
+          <p>從 8 筆正式候選中，依「目前總分 → 緊急程度 → 來源可信度 → 事件日期」排出前三筆。所有內容取自事件資料庫原文，未加入金額、機率或因果推論。</p></div>
+        </div>
+        <div class="attention" id="attention-list"></div>
+      </div>
+    </section>
+
+    <!-- ================= 事件訊號與系統狀態 ================= -->
+    <section class="band band-alt" id="signal-band" aria-labelledby="sigband-title">
+      <div class="wrap">
+        <div class="sec-head"><div><p class="kicker-line">02 · SIGNAL &amp; GOVERNANCE</p><h2 id="sigband-title">事件訊號分析與系統狀態</h2>
+          <p>點選晶圓上的事件或三件優先事件，這裡的分數形成、五道門檻與相關環節會同步切換。</p></div></div>
+        <div class="sig-grid">
+          <section class="signal" id="signal" aria-live="polite" aria-labelledby="signal-title"></section>
+          <div class="status-col">
+            <div class="ops" id="ops"></div>
+            <div class="governance" id="governance"></div>
+            <dl class="provenance" id="provenance"></dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 1. 七段供應鏈 ================= -->
+    <section class="band band-alt" aria-labelledby="chain-title">
+      <div class="wrap">
+        <div class="sec-head"><div><p class="kicker-line">03 · SUPPLY CHAIN</p><h2 id="chain-title">七段供應鏈風險分布</h2>
+          <p>依現有資料識別的影響範圍。一筆事件可涉及多個環節，因此合計大於 39。標示 ①②③ 的是三筆優先事件涉及的環節。</p></div></div>
+        <ol class="chain" id="chain"></ol>
+        <p class="caveat"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><span>環節順序只是供應鏈的閱讀順序，視覺化關聯不代表已證實的因果方向。歸類依「影響環節」對照表（草案）。</span></p>
+      </div>
+    </section>
+
+    <!-- ================= 2. 時間線 ================= -->
+    <section class="band" aria-labelledby="tl-title">
+      <div class="wrap">
+        <div class="panel">
+          <div class="sec-head"><div><p class="kicker-line">04 · TIMELINE</p><h2 id="tl-title">近期事件時間線（依事件日期）</h2><p>依事件日期排列的最近 8 筆。</p></div><a class="btn btn-ghost" href="app.html#/events">全部事件情報</a></div>
+          <div class="tl"><div class="tl-rail" aria-hidden="true"></div><ol class="tl-list" id="timeline"></ol></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. 候選判定與去重 ================= -->
+    <section class="band band-alt" id="gate" aria-labelledby="gate-title">
+      <div class="wrap">
+        <div class="sec-head"><div><p class="kicker-line">05 · DECISION GATES</p><h2 id="gate-title">候選判定與去重狀態</h2>
+          <p>五項條件全部通過才會成為正式候選；建立草稿前還要比對防重複鍵。</p></div></div>
+        <div class="gate-grid">
+          <ol class="gates" id="gates"></ol>
+          <div class="dedup" id="dedup"></div>
+        </div>
+        <div class="trace-wrap">
+          <div class="trace-head"><h3>逐筆判定</h3><label class="trace-pick"><span>選擇事件</span><select id="trace-select"></select></label></div>
+          <div id="gate-trace" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. Why this matters + 方法與安全 ================= -->
+    <section class="band" aria-labelledby="why-title">
+      <div class="wrap why">
+        <div>
+          <p class="kicker-line">06 · WHY THIS MATTERS</p>
+          <h2 id="why-title">把散落的外部事件，變成一致的評分與行動</h2>
+          <dl class="why-list">
+            <div><dt>營運痛點</dt><dd>出口管制、原料、地震、物流與產能事件散落在政府、公司與產業來源；新聞的嚴重程度不等於企業的實際營運風險。</dd></div>
+            <div><dt>一致評分</dt><dd>每筆事件以四構面評分：影響×8、可能性×6、緊急×4、可信度×2，滿分 100；紅 80–100、黃 40–79、綠 0–39。</dd></div>
+            <div><dt>雙軌評分</dt><dd>「事件當時分數」保留歷史衝擊供研究；「目前預警分數」依查證時的狀態重評，是唯一的通知依據。歷史紅色 25 筆，目前紅色 8 筆。</dd></div>
+            <div><dt>五項條件</dt><dd>目前狀態已查證、目前總分 ≥ 80、目前紅色、Gmail 候選＝是、來源網址不為空白。</dd></div>
+            <div><dt>防重複</dt><dd>以「事件ID｜目前總分｜分流｜候選｜網址｜分數說明」產生快照鍵；同一快照不會重複建立草稿。</dd></div>
+            <div><dt>安全邊界</dt><dd>原系統只建立 Gmail 草稿，由人工覆核後決定是否寄出；每次最多 5 封。展示網站不連線正式環境。</dd></div>
+          </dl>
+        </div>
+        <div class="roadmap">
+          <h3>實作狀態</h3>
+          <ul class="rm" id="roadmap"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 5. 資料來源、範圍與限制 ================= -->
+    <section class="band band-alt" id="limits" aria-labelledby="limits-title">
+      <div class="wrap">
+        <div class="limits">
+          <div><p class="kicker-line">07 · DATA &amp; METHOD</p><h2 id="limits-title">資料來源與方法說明</h2></div>
+          <ul id="limits-list"></ul>
+        </div>
+      </div>
+    </section>
+    <p class="foot">資料來源：公開、可回溯的政府、監管機關、公司公告與產業統計；公司營運情境為示範情境。</p>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap">
+      <p><b>許馨｜供應鏈風險預警作品</b>：以 Google Sheets＋Apps Script 打造的供應鏈外部事件風險預警系統。本站展示去識別化資料快照；正式系統只建立 Gmail 草稿，寄送前由負責人覆核。</p>
+      <p class="foot-links"><a href="app.html#/overview">系統總覽</a><a href="app.html#/events">事件資料庫</a><a href="app.html#/triage">分流與候選</a><a href="app.html#/simulate">草稿模擬</a><a href="app.html#/log">通知紀錄</a><a href="app.html#/quality">資料品質</a><a href="app.html#/method">方法與架構</a></p>
+      <p class="foot-credit">作品集專案 · 許馨 · 原系統：Google Sheets＋Apps Script S6-v1.5</p>
+    </div>
+  </footer>
+  <div class="tooltip" id="tip" role="tooltip" hidden></div>
+  <dialog class="case" id="case" aria-labelledby="case-title"><div class="case-panel" id="case-panel"></div></dialog>
+
+  <script src="data/risk-data.js"></script>
+  <script src="data/stage-map.js"></script>
+  <script src="assets/rules.js"></script>
+  <script src="assets/home.js"></script>
+  <script src="assets/site-nav.js"></script>
+  <script src="assets/motion.js"></script>
+</body>
+</html>

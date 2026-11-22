@@ -1,0 +1,992 @@
+{
+  "name": "許馨 n8n 工作台 API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "xin-portal",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "369072a8-630f-4d55-b08b-27df8c621adf",
+      "name": "接收網頁請求",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "webhookId": "77c6087d-a1ad-4131-88c4-a3feb14f3758"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 網頁每次送一筆：{ flow, row }。用 text/plain 送出以避開瀏覽器預檢，所以這裡要自己解析字串。\nconst FLOWS = ['WEEKLY','O01','O04','O13','O14','TESTMAIL'];\nlet body = $input.first().json.body;\nif (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }\nbody = body || {};\nconst flow = String(body.flow || '').toUpperCase();\nconst row = (body.row && typeof body.row === 'object') ? body.row : {};\nreturn [{ json: { ...row, flow, known_flow: FLOWS.includes(flow) } }];"
+      },
+      "id": "72a32219-2a52-4a0f-b9c9-2798e4b0a2e8",
+      "name": "整理輸入",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 7,
+        "output": "={{ ['WEEKLY','O01','O04','O13','O14','TESTMAIL'].indexOf($json.flow) === -1 ? 6 : ['WEEKLY','O01','O04','O13','O14','TESTMAIL'].indexOf($json.flow) }}"
+      },
+      "id": "998d7f6e-a5a8-4246-a0ae-3656ce0ebd64",
+      "name": "依流程分流",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        440,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 檢查並計算：網頁送來的週資料（n8n Code 節點與網頁示範模式共用同一套規則）\nfunction checkAndCalc(b) {\n  b = b || {};\n  const errors = [];\n  const week = String(b.week ?? '').trim();\n  const num = (k) => {\n    const raw = b[k];\n    if (raw === '' || raw === null || raw === undefined) return null;\n    const v = Number(raw);\n    return Number.isFinite(v) ? v : null;\n  };\n  const thisWeek = num('thisWeek'), lastWeek = num('lastWeek'), target = num('target');\n  if (!week) errors.push('缺少週次');\n  if (thisWeek === null) errors.push('本週數字缺漏或不是數字');\n  if (lastWeek === null) errors.push('上週數字缺漏或不是數字');\n  if (target === null) errors.push('目標缺漏或不是數字');\n  if (thisWeek !== null && thisWeek < 0) errors.push('本週數字不能是負數');\n  if (lastWeek !== null && lastWeek <= 0) errors.push('上週數字必須大於 0 才能算成長率');\n  if (target !== null && target <= 0) errors.push('目標必須大於 0 才能算達成率');\n  if (errors.length) return { ok: false, week, errors };\n  const growth = Math.round((thisWeek - lastWeek) / lastWeek * 1000) / 10;\n  const achievement = Math.round(thisWeek / target * 1000) / 10;\n  const subject = `${week} 週報｜成長率 ${growth}%、達成率 ${achievement}%`;\n  const body = [\n    `${week} 週報`,\n    ``,\n    `本週：${thisWeek}`,\n    `上週：${lastWeek}`,\n    `目標：${target}`,\n    `成長率：${growth}%`,\n    `達成率：${achievement}%`,\n  ].join('\\n');\n  return { ok: true, week, thisWeek, lastWeek, target, growth, achievement, subject, body };\n}\n\nreturn $input.all().map(i => ({ json: checkAndCalc(i.json) }));"
+      },
+      "id": "1640398d-2f8c-4547-9d2c-6ffb9555fc3e",
+      "name": "週報｜檢查並計算",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ac1b4bca-7b7b-4967-84b9-4184aba01005",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f9590517-ce88-42b6-a250-ffc4d01ef751",
+      "name": "週報｜資料正確？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "55ac5bfc-863f-439b-a284-324967213d56",
+      "name": "週報｜建立 Gmail 草稿",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1140,
+        -80
+      ],
+      "webhookId": "c885b028-0dd5-4f55-a74f-7fd1f56545c0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "請改選自己的 Gmail 憑證"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1ab451fb-3526-468b-8c40-a1af8a265478",
+              "name": "result",
+              "value": "已建草稿",
+              "type": "string"
+            },
+            {
+              "id": "52e2aa1b-0e3f-4e6b-b49d-30efe0e3b7a9",
+              "name": "id",
+              "value": "={{ $('週報｜檢查並計算').first().json.week }}",
+              "type": "string"
+            },
+            {
+              "id": "33e23463-280e-4ce8-9b7f-fb25d9819ff4",
+              "name": "growth",
+              "value": "={{ $('週報｜檢查並計算').first().json.growth }}",
+              "type": "number"
+            },
+            {
+              "id": "f32c47b3-db80-4f53-b40c-7c83454ef439",
+              "name": "achievement",
+              "value": "={{ $('週報｜檢查並計算').first().json.achievement }}",
+              "type": "number"
+            },
+            {
+              "id": "3e5f26bf-848f-4804-a211-3e3760512ac9",
+              "name": "subject",
+              "value": "={{ $('週報｜檢查並計算').first().json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "f72f157d-d7c8-4738-be8b-5bea0a100ce1",
+              "name": "draft_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "b5f00afe-50c0-4ba8-b5d1-1e669dba2d3f",
+      "name": "週報｜已建草稿",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "185b8b93-2374-4405-8f11-52f194f75d65",
+              "name": "result",
+              "value": "資料不全",
+              "type": "string"
+            },
+            {
+              "id": "1a4e8143-b550-4d8b-a0c8-e9066f40435b",
+              "name": "id",
+              "value": "={{ $json.week }}",
+              "type": "string"
+            },
+            {
+              "id": "29ac699a-82f3-40f6-a675-b4dd2c2ab3d4",
+              "name": "errors",
+              "value": "={{ $json.errors }}",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "6e53d843-6d29-4ce0-8b41-ad12ed3daa20",
+      "name": "週報｜資料不全",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c0d2f12c-c730-4610-af32-4594b72a15ac",
+              "name": "result",
+              "value": "={{ $json.paid_amount == null || String($json.paid_amount).trim() === '' ? '未付款' : Number($json.qty) * Number($json.unit_price) === Number($json.paid_amount) ? '正確' : '金額不符' }}",
+              "type": "string"
+            },
+            {
+              "id": "f5f98a2c-c23d-437d-bb4b-812e61b5aeee",
+              "name": "id",
+              "value": "={{ $json.order_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2bf704a7-b5e0-4401-a455-3c5a817a301f",
+      "name": "O01｜訂單金額核對",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ $json.stock == null || String($json.stock).trim() === \"\" ? 2 : Number($json.stock) < Number($json.safety_stock) ? 0 : 1 }}"
+      },
+      "id": "6f3fbf93-c448-4b91-9a83-ad38cd9970cf",
+      "name": "O04｜庫存三路分流",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        700,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ '補貨需求｜' + $json.sku + ' ' + $json.item }}",
+        "message": "={{ \"【補貨草稿，待人工確認】\\n品項：\" + $json.item + \"\\nSKU：\" + $json.sku + \"\\n現有庫存：\" + $json.stock + \"\\n安全庫存：\" + $json.safety_stock + \"\\n補至安全庫存所需數量：\" + (Number($json.safety_stock) - Number($json.stock)) + \"\\n請確認交期與報價。\" }}",
+        "options": {}
+      },
+      "id": "b438571b-96fb-434f-a059-919af7a2f5ab",
+      "name": "O04｜建立補貨草稿",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        920,
+        340
+      ],
+      "webhookId": "d3065654-d699-4838-b3cf-f665deeeb5af",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "請改選自己的 Gmail 憑證"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52f8f821-6b69-442e-822b-bc55a162b713",
+              "name": "result",
+              "value": "已建草稿",
+              "type": "string"
+            },
+            {
+              "id": "7423bde8-d0d3-4fef-9d8e-fa538d5e99df",
+              "name": "id",
+              "value": "={{ $('整理輸入').first().json.sku }}",
+              "type": "string"
+            },
+            {
+              "id": "50c8ecb2-9f83-4790-9184-bd5d3c577e92",
+              "name": "need_qty",
+              "value": "={{ Number($('整理輸入').first().json.safety_stock) - Number($('整理輸入').first().json.stock) }}",
+              "type": "number"
+            },
+            {
+              "id": "c76beed9-7f37-49e9-9804-f4c8214bb0fc",
+              "name": "draft_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "408a990d-85ad-433d-be27-4a1eb01f8409",
+      "name": "O04｜已建草稿",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9911eca-16dd-44ab-ba38-132e3b3c0773",
+              "name": "result",
+              "value": "不用補",
+              "type": "string"
+            },
+            {
+              "id": "2f87ceec-0a1a-4796-9971-0d28ffa4d0bc",
+              "name": "id",
+              "value": "={{ $json.sku }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2e226de1-c9f2-4d16-9d62-5409bfbab926",
+      "name": "O04｜不用補",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2cb9d2fe-a5d2-4539-9736-32731378e565",
+              "name": "result",
+              "value": "資料不全",
+              "type": "string"
+            },
+            {
+              "id": "ecaf2e34-290d-441e-9b51-6f1220e6e0dc",
+              "name": "id",
+              "value": "={{ $json.sku }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "25572579-6f7f-4858-a488-4ec58cf75839",
+      "name": "O04｜資料不全",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2cec6fa2-9e97-4f31-9eb7-60072a9424ac",
+              "name": "result",
+              "value": "={{ $json.status == null || String($json.status).trim() === '' ? '資料不全' : $json.status === 'cancelled' && $json.in_revenue === 'yes' ? '要修正' : '正常' }}",
+              "type": "string"
+            },
+            {
+              "id": "d23007c5-c6fe-493e-97c4-fef7b6df0e13",
+              "name": "id",
+              "value": "={{ $json.order_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "aa4080b9-2928-4e9a-acf8-0cc5e16410df",
+      "name": "O13｜取消訂單營收檢核",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1cd0380-88c3-47c8-bed7-07508f115d42",
+              "name": "result",
+              "value": "={{ $json.revenue == null || String($json.revenue).trim() === '' ? '資料不全' : Number($json.revenue) / 15000 >= 1 ? '達標' : Number($json.revenue) / 15000 >= 0.8 ? '接近' : '落後' }}",
+              "type": "string"
+            },
+            {
+              "id": "34b424e0-0a75-4d52-a32e-4a2e330f9d54",
+              "name": "achievement_rate_display",
+              "value": "={{ $json.revenue == null || String($json.revenue).trim() === '' ? '' : (Number($json.revenue) / 15000 * 100).toFixed(4) + '%' }}",
+              "type": "string"
+            },
+            {
+              "id": "f544da67-3e9e-4812-9a0d-7696b5968572",
+              "name": "id",
+              "value": "={{ $json.day_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d3b4bf56-1e24-4183-999c-a22f51b315ff",
+      "name": "O14｜每日營收達成率",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "hixinxin5678@gmail.com",
+        "subject": "n8n 工作台｜Gmail 寄送測試",
+        "emailType": "text",
+        "message": "={{ '這是 n8n 工作台的測試信，收到代表 Gmail 寄送設定正常。\\n寄出時間：' + $now.setZone('Asia/Taipei').toFormat('yyyy-MM-dd HH:mm:ss') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "0f35065d-06e0-458b-a311-fb84684816bb",
+      "name": "測試信｜寄出",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        1040
+      ],
+      "webhookId": "36767a75-b140-4f1a-b909-a855adc5921f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "請改選自己的 Gmail 憑證"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "33145738-b71a-4dfe-8f13-628fbdafb331",
+              "name": "result",
+              "value": "已寄出",
+              "type": "string"
+            },
+            {
+              "id": "6b4b17c0-4e31-44f2-b264-48b00c69f16f",
+              "name": "to",
+              "value": "hixinxin5678@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "72343b03-df09-4d56-94fa-d2fd29099ec1",
+              "name": "message_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "104f2796-6b4f-4162-8b82-188c173a8c2d",
+      "name": "測試信｜已寄出",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03b39e9f-a850-4b39-a1a5-be4cd878ff0b",
+              "name": "result",
+              "value": "={{ $json.flow === 'PING' ? '連線正常' : '未知流程' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "78ea9e78-e840-4c6f-82c7-63c7855f1407",
+      "name": "連線測試或未知流程",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "6cae9f0d-1ba4-49b5-be0e-abc5959d52d5",
+      "name": "回傳結果",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d6b65a72-bceb-4506-a1df-ced87c4e3862",
+              "name": "result",
+              "value": "Gmail 失敗",
+              "type": "string"
+            },
+            {
+              "id": "6a725a01-da59-4bb6-9cb4-685c414348fd",
+              "name": "id",
+              "value": "={{ $('週報｜檢查並計算').first().json.week }}",
+              "type": "string"
+            },
+            {
+              "id": "218d57b1-9f23-4644-bc85-2e79d9be4d9d",
+              "name": "error",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message ? $json.error.message : 'Gmail 節點執行失敗') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "3e26aaf7-6ceb-4a6f-aee7-e9b33ae9c35a",
+      "name": "週報｜Gmail 失敗",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aa0e22cd-767a-43e3-af33-a6817243a4aa",
+              "name": "result",
+              "value": "Gmail 失敗",
+              "type": "string"
+            },
+            {
+              "id": "5e14c7a3-8051-47d1-9ff7-f2056f788f7e",
+              "name": "id",
+              "value": "={{ $('整理輸入').first().json.sku }}",
+              "type": "string"
+            },
+            {
+              "id": "69101077-eb0d-4649-801b-6426ef08f43b",
+              "name": "error",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message ? $json.error.message : 'Gmail 節點執行失敗') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "392b9943-2b81-4b04-8f8a-1f99ce8357e9",
+      "name": "O04｜Gmail 失敗",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1bd9ec4c-3ca4-4e96-9895-2543cc626d27",
+              "name": "result",
+              "value": "Gmail 失敗",
+              "type": "string"
+            },
+            {
+              "id": "45d6fef0-82fa-4714-b78d-bc7d85b4be58",
+              "name": "id",
+              "value": "hixinxin5678@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "c1a3b91d-e2b1-4696-8942-a755a2b4ed7a",
+              "name": "error",
+              "value": "={{ typeof $json.error === 'string' ? $json.error : ($json.error && $json.error.message ? $json.error.message : 'Gmail 節點執行失敗') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "792343e4-7d2b-49ac-a507-e928a801bf79",
+      "name": "測試信｜Gmail 失敗",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        1140
+      ]
+    }
+  ],
+  "connections": {
+    "接收網頁請求": {
+      "main": [
+        [
+          {
+            "node": "整理輸入",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "整理輸入": {
+      "main": [
+        [
+          {
+            "node": "依流程分流",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "依流程分流": {
+      "main": [
+        [
+          {
+            "node": "週報｜檢查並計算",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O01｜訂單金額核對",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O04｜庫存三路分流",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O13｜取消訂單營收檢核",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O14｜每日營收達成率",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "測試信｜寄出",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "連線測試或未知流程",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "測試信｜寄出": {
+      "main": [
+        [
+          {
+            "node": "測試信｜已寄出",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "測試信｜Gmail 失敗",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜檢查並計算": {
+      "main": [
+        [
+          {
+            "node": "週報｜資料正確？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜資料正確？": {
+      "main": [
+        [
+          {
+            "node": "週報｜建立 Gmail 草稿",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "週報｜資料不全",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜建立 Gmail 草稿": {
+      "main": [
+        [
+          {
+            "node": "週報｜已建草稿",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "週報｜Gmail 失敗",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜庫存三路分流": {
+      "main": [
+        [
+          {
+            "node": "O04｜建立補貨草稿",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O04｜不用補",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O04｜資料不全",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜建立補貨草稿": {
+      "main": [
+        [
+          {
+            "node": "O04｜已建草稿",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "O04｜Gmail 失敗",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜已建草稿": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜資料不全": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O01｜訂單金額核對": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜已建草稿": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜不用補": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜資料不全": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O13｜取消訂單營收檢核": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O14｜每日營收達成率": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "測試信｜已寄出": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "連線測試或未知流程": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "週報｜Gmail 失敗": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "O04｜Gmail 失敗": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "測試信｜Gmail 失敗": {
+      "main": [
+        [
+          {
+            "node": "回傳結果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

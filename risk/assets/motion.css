@@ -1,0 +1,66 @@
+/* 動態層樣式（首頁與系統頁共用；動畫時序在 assets/motion.js）
+ * 骨架畫面：.skel-layer 疊在內容上、與內容同尺寸，只用 opacity／background-position，不造成版面位移。
+ * 橡皮筋：按壓時縮小、放開以超越終點的彈簧曲線回彈；頁籤選取底色以彈簧曲線滑動（site-nav.js）。
+ * 色值只用已登記的 Dream 系列：#FDF6F7、#F8E6EA、#FFFFFF。 */
+
+/* ---------- 骨架畫面 ---------- */
+#decision, #hero-kpi, .kpi, .roi, #attention-list > *, #main { position: relative; }
+.skel-layer { position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: inherit; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;
+  background: linear-gradient(165deg, #FFFFFF 0%, #FDF6F7 100%); }
+.skel-layer i, .skel-row i { display: block; height: 12px; border-radius: 999px; width: 100%;
+  background: linear-gradient(100deg, #FDF6F7 30%, #FFFFFF 50%, #FDF6F7 70%) #FDF6F7; background-size: 260% 100%; background-position: 130% 0; }
+.skel-layer i.tall { height: 22px; border-radius: 8px; }
+.skel-layer i.pill { height: 36px; border-radius: 999px; margin-top: auto; }
+.skel-layer .w30 { width: 30%; } .skel-layer .w35 { width: 35%; } .skel-layer .w45 { width: 45%; } .skel-layer .w50 { width: 50%; } .skel-layer .w55 { width: 55%; }
+.skel-layer .w60 { width: 60%; } .skel-layer .w70 { width: 70%; } .skel-layer .w80 { width: 80%; } .skel-layer .w85 { width: 85%; } .skel-layer .w88 { width: 88%; }
+.skel-layer .w90 { width: 90%; } .skel-layer .w92 { width: 92%; } .skel-layer .w95 { width: 95%; }
+/* 成果條：四格骨架 */
+.skel-kpi { flex-direction: row; padding: 14px; gap: 14px; background: #F8E6EA; }
+.skel-kpi i { height: auto; flex: 1; border-radius: 10px; background-color: #FDF6F7; }
+/* KPI 卡：大數字＋三行說明 */
+.skel-kpi-card { padding: 18px 20px; gap: 10px; }
+.skel-layer i.big { height: 34px; border-radius: 8px; margin-bottom: 4px; }
+/* 系統頁整頁骨架 */
+.skel-page { inset: 0 0 auto 0; min-height: 420px; background: transparent; padding: 28px 28px 0; }
+.skel-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 8px 0; }
+.skel-row i { height: 76px; border-radius: 12px; }
+/* 骨架期間：內容保留尺寸但看不見（opacity，不影響讀取與操作） */
+.is-skel > :not(.skel-layer) { opacity: 0; }
+.is-skel-page > :not(.skel-layer) { opacity: 0; }
+/* 單一元素骨架期間的微光（CSS，有限次數） */
+.is-skel .skel-layer i, .is-skel-page .skel-layer i { animation: skel-shimmer 1.05s ease-in-out 3; }
+@keyframes skel-shimmer { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+
+/* ---------- 橡皮筋：按壓回彈 ---------- */
+.btn, .fl-btn, .hero-kpi, .kpi, .gnav a, .nav a, .tab, .chip-btn, .row-link td:first-child, .sidenav a, .nav-toggle, .roi-form input, .attention > *, .signal .btn-sm {
+  transition-property: transform, background-color, border-color, box-shadow, color;
+  transition-duration: .55s; transition-timing-function: cubic-bezier(.34, 1.8, .5, 1); }
+.btn:active, .fl-btn:active, .gnav a:active, .nav a:active, .sidenav a:active, .nav-toggle:active, .tab:active { transform: scale(.92); transition-duration: .08s; transition-timing-function: ease-out; }
+.hero-kpi:active, .kpi:active, .attention > *:active { transform: scale(.975); transition-duration: .08s; transition-timing-function: ease-out; }
+.btn:hover, .fl-btn:hover { transform: translateY(-2px); }
+.hero-kpi:hover { transform: translateY(-2px); }
+
+/* 對話框以彈簧曲線開啟 */
+dialog[open] > .case-panel, dialog.dialog[open] { animation: spring-open .62s linear both; }
+@keyframes spring-open {
+  0% { opacity: 0; transform: translateY(24px) scale(.92); }
+  55% { opacity: 1; transform: translateY(-6px) scale(1.02); }
+  76% { transform: translateY(2px) scale(.995); }
+  90% { transform: translateY(-1px) scale(1.002); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 頁籤選取底色：滑動的「墨水」，以彈簧曲線移動（位置由 site-nav.js 設定） */
+.nav, .gnav { position: relative; isolation: isolate; }
+.nav-ink { position: absolute; left: 0; top: 0; height: 0; width: 0; z-index: -1; border-radius: 999px; background: #33303A; pointer-events: none; opacity: 0;
+  transition: transform .6s cubic-bezier(.34, 1.56, .64, 1), width .6s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease; }
+.has-ink a[aria-current=page] { background: transparent !important; }
+.has-ink .nav-ink { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-layer { display: none !important; }
+  .is-skel > *, .is-skel-page > * { opacity: 1 !important; }
+  .btn, .fl-btn, .hero-kpi, .kpi, .gnav a, .nav a, .sidenav a, .nav-toggle, .attention > * { transition: none !important; transform: none !important; }
+  dialog[open] > .case-panel, dialog.dialog[open] { animation: none; }
+  .nav-ink { transition: none; }
+}

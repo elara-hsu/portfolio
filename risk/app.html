@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>許馨｜供應鏈風險預警作品｜系統頁</title>
+  <meta name="description" content="半導體供應鏈外部事件風險分流與營運預警系統：唯讀展示版。">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FFFFFF">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cellipse cx='18' cy='18' rx='16' ry='6.5' transform='rotate(-24 18 18)' fill='none' stroke='%23A84870' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='9.5' fill='%2333303A'/%3E%3Ccircle cx='30.4' cy='11.5' r='2.4' fill='%23EBC3CF'/%3E%3C/svg%3E">
+  
+  
+  
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/motion.css">
+</head>
+<body data-page="app">
+  <a class="skip" id="skip" href="#main">跳到主要內容</a>
+  <header class="topbar">
+    <div class="brand">
+      <a href="index.html" class="brand-link" aria-label="回到決策總覽"><svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="18" rx="16" ry="6.5" transform="rotate(-24 18 18)" fill="none" stroke="#A84870" stroke-width="1.6"/><circle cx="18" cy="18" r="9.5" fill="#33303A" stroke="none"/><path d="M13 15h10M13 18h10M13 21h10M15 13v10M18 13v10M21 13v10" stroke="#EBC3CF" stroke-width=".9" fill="none"/><circle cx="30.4" cy="11.5" r="2" fill="#EBC3CF" stroke="none"/></svg></a>
+      <div>
+        <p class="brand-title" id="app-title">半導體供應鏈風險預警系統</p>
+        <p class="brand-sub" id="app-sub"></p>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="site-nav" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span id="nav-toggle-text">選單</span></button>
+    <nav class="gnav" id="site-nav" aria-label="主要導覽">
+      <a href="index.html" data-nav="home" id="home-link"><span id="home-link-text">決策總覽</span></a><a href="app.html#/events" data-nav="events">事件情報</a><a href="index.html#signal-band" data-nav="map">風險版圖</a><a href="app.html#/triage" data-nav="triage">候選判定</a><a href="app.html#/method" data-nav="method">方法與治理</a><a href="app.html#/simulate" data-nav="simulate" class="nav-secondary">草稿模擬</a><a href="app.html#/log" data-nav="log" class="nav-secondary">通知紀錄</a>
+    </nav>
+    <div class="topbar-right">
+      <span class="data-badge" id="data-badge"></span>
+      <label class="lang">
+        <span id="lang-label">語言</span>
+        <select id="lang">
+          <option value="zh-Hant">繁體中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
+  </header>
+  <div class="layout">
+    <nav class="sidenav" id="nav" aria-label="Main"></nav>
+    <main id="main" class="main" tabindex="-1"></main>
+  </div>
+  <div class="safety safety-foot" role="note">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+    <span id="safety-text"></span>
+    <a href="#/method" id="safety-link"></a>
+  </div>
+  <footer class="footer"><p id="footer"></p></footer>
+
+  <dialog id="detail" class="dialog dialog-wide" aria-labelledby="detail-title"><div class="dlg-body"></div></dialog>
+  <dialog id="preview" class="dialog" aria-labelledby="preview-title"><div class="dlg-body"></div></dialog>
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+  <noscript><p class="noscript">本網站需要 JavaScript 才能顯示資料。This site needs JavaScript.</p></noscript>
+  <script src="data/risk-data.js"></script>
+  <script src="assets/rules.js"></script>
+  <script src="assets/i18n.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/site-nav.js"></script>
+  <script src="assets/motion.js"></script>
+</body>
+</html>

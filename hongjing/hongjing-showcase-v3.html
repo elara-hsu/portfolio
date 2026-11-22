@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>許馨 商標管理儀表板｜系統實作成果展示板 v3</title>
+<style>
+  :root {
+    --navy: #1B365D;
+    --navy-dark: #102442;
+    --blue: #2B6CB0;
+    --blue-light: #EBF8FF;
+    --teal: #2C7A7B;
+    --teal-light: #E6FFFA;
+    --green: #2F855A;
+    --green-light: #F0FFF4;
+    --purple: #6B46C1;
+    --purple-light: #FAF5FF;
+    --amber: #B7791F;
+    --amber-light: #FFFFF0;
+    --red: #C53030;
+    --red-light: #FFF5F5;
+    --bg: #F4F7FA;
+    --card: #FFFFFF;
+    --text: #1A202C;
+    --muted: #4A5568;
+    --border: #CBD5E0;
+    --shadow: 0 4px 14px rgba(27, 54, 93, 0.08);
+    --shadow-lg: 0 12px 30px rgba(27, 54, 93, 0.16);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang TC", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Top Sticky Header */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+    color: #fff;
+    padding: 14px 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  }
+  .header-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .brand-area h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-badge {
+    background: #D69E2E;
+    color: #1A202C;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 99px;
+  }
+  .brand-area p {
+    font-size: 12.5px;
+    color: #BEE3F8;
+    margin-top: 2px;
+  }
+
+  /* Navigation Tabs & Folder Loader */
+  .controls-area {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .tab-bar {
+    display: flex;
+    background: rgba(255,255,255,0.12);
+    padding: 4px;
+    border-radius: 10px;
+    gap: 4px;
+  }
+  .tab-btn {
+    border: none;
+    background: transparent;
+    color: #E2E8F0;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .tab-btn.active {
+    background: #FFFFFF;
+    color: var(--navy);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .load-btn {
+    background: #38A169;
+    color: #fff;
+    border: 1px solid #68D391;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .load-btn:hover { background: #2F855A; transform: translateY(-1px); }
+  .status-pill {
+    font-size: 12px;
+    background: rgba(255,255,255,0.14);
+    color: #E2E8F0;
+    padding: 6px 12px;
+    border-radius: 99px;
+  }
+  .status-pill.ready {
+    background: #22543D;
+    color: #9AE6B4;
+    border: 1px solid #48BB78;
+  }
+
+  /* Main Container */
+  main {
+    max-width: 1440px;
+    margin: 24px auto 60px;
+    padding: 0 24px;
+  }
+  .section-panel { display: none; }
+  .section-panel.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 5-Stage Process Roadmap (Matches Presentation Slide 10) */
+  .roadmap-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .road-card {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .road-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--blue);
+    box-shadow: var(--shadow-lg);
+  }
+  .road-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: #5A6794;
+    line-height: 1.1;
+  }
+  .road-pill {
+    display: inline-block;
+    align-self: flex-start;
+    background: #3B4252;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 99px;
+  }
+  .road-card.stage5 .road-pill {
+    background: var(--amber);
+  }
+  .road-list {
+    list-style: none;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .road-list li::before {
+    content: "✓ ";
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  /* Intro Banner */
+  .hero-banner {
+    background: var(--card);
+    border-left: 6px solid var(--blue);
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .hero-banner h2 { font-size: 20px; color: var(--navy); margin-bottom: 4px; }
+  .hero-banner p { font-size: 14px; color: var(--muted); }
+  .quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quick-chip {
+    background: var(--blue-light);
+    color: var(--blue);
+    border: 1px solid #90CDF4;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: 0.15s;
+  }
+  .quick-chip:hover { background: var(--blue); color: #fff; }
+
+  /* Step / Feature Block */
+  .stage-block {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 26px;
+    box-shadow: var(--shadow);
+    border: 1px solid #E2E8F0;
+  }
+  .stage-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid #EDF2F7;
+  }
+  .stage-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .step-tag {
+    background: var(--navy);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 8px;
+  }
+  .step-tag.green { background: var(--green); }
+  .step-tag.purple { background: var(--purple); }
+  .step-tag.amber { background: #B7791F; }
+  .stage-header h3 { font-size: 18.5px; color: var(--navy); }
+  .role-badge {
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 99px;
+    background: var(--blue-light);
+    color: var(--blue);
+    border: 1px solid #BEE3F8;
+  }
+  .stage-summary {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 9px;
+    padding: 11px 16px;
+    font-size: 13.8px;
+    color: #2D3748;
+    margin-bottom: 18px;
+  }
+  .stage-summary b { color: var(--navy); }
+
+  /* Media Grid */
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 18px;
+  }
+  .media-grid.cols-3 {
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  }
+  .media-card {
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    overflow: hidden;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .media-card.mail-card {
+    border-color: #90CDF4;
+    background: #F7FAFC;
+  }
+  .media-card.mail-card .media-card-top {
+    background: #EBF8FF;
+    border-bottom-color: #90CDF4;
+  }
+  .media-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--blue);
+  }
+  .media-card-top {
+    background: #EDF2F7;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .media-card-top .cap-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .file-type-tag {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: #CBD5E0;
+    color: #1A202C;
+    flex-shrink: 0;
+  }
+  .file-type-tag.gif { background: #FED7D7; color: #9B2C2C; }
+  .file-type-tag.pdf { background: #E9D8FD; color: #553C9A; }
+  .file-type-tag.png { background: #BEE3F8; color: #2A4365; }
+
+  .media-viewport {
+    position: relative;
+    min-height: 250px;
+    max-height: 440px;
+    background: #F7FAFC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .media-viewport img {
+    width: 100%;
+    height: auto;
+    max-height: 440px;
+    object-fit: contain;
+    display: block;
+  }
+  .media-viewport iframe {
+    width: 100%;
+    height: 380px;
+    border: none;
+  }
+  .zoom-hint {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: rgba(27, 54, 93, 0.86);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+
+  /* Verified Snapshot Fallback Card */
+  .snapshot-fallback {
+    padding: 18px 20px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFC 100%);
+  }
+  .snap-badge {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--green-light);
+    border: 1px solid #9AE6B4;
+    padding: 2px 9px;
+    border-radius: 99px;
+    margin-bottom: 8px;
+  }
+  .snap-kv {
+    font-size: 12.8px;
+    color: #2D3748;
+    background: #EDF2F7;
+    padding: 10px 12px;
+    border-radius: 8px;
+    line-height: 1.55;
+  }
+  .snap-kv code {
+    background: #E2E8F0;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: var(--navy);
+  }
+  .snap-foot {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: #718096;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .media-caption {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    background: #FFFFFF;
+    border-top: 1px solid #EDF2F7;
+  }
+
+  /* Lightbox Modal */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(10, 20, 38, 0.92);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .lightbox.open { display: flex; }
+  .lb-top {
+    width: 100%;
+    max-width: 1360px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+  .lb-title { font-size: 17px; font-weight: 700; }
+  .lb-btns { display: flex; gap: 10px; }
+  .lb-btn {
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .lb-btn:hover { background: rgba(255,255,255,0.28); }
+  .lb-body {
+    width: 100%;
+    max-width: 1360px;
+    height: 80vh;
+    background: #1A202C;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px;
+  }
+  .lb-body img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .lb-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+    border-radius: 6px;
+  }
+  .lb-desc {
+    color: #CBD5E0;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+    max-width: 1100px;
+  }
+
+  @media (max-width: 960px) {
+    .roadmap-bar { grid-template-columns: repeat(2, 1fr); }
+    .media-grid, .media-grid.cols-3 { grid-template-columns: 1fr; }
+  }
+</style>
+<style>
+  body, button, input, select, textarea {
+    font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand-area">
+      <h1>
+        <span class="brand-badge">實作成果展示板 v3</span>
+        許馨 商標管理儀表板
+      </h1>
+      <p>依照主流程 5 階段（含時間序自動通知信）與四大系統亮點完整編排</p>
+    </div>
+
+    <div class="controls-area">
+      <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="part1">Part 1｜完整主線流程（01 ~ 04）</button>
+        <button type="button" class="tab-btn" data-tab="part2">Part 2｜系統亮點與追蹤看板（05 ~ 09）</button>
+      </div>
+
+      <label class="load-btn" title="選取本機「簡報截圖」資料夾內的所有檔案（按 Ctrl+A 全選）">
+        📂 載入本機截圖資料夾
+        <input type="file" id="folderPicker" multiple accept="image/*,.pdf" style="display:none">
+      </label>
+      <span id="loadStatus" class="status-pill">預設讀取同資料夾檔案</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ===================================================================== -->
+  <!-- PART 1: MAIN END-TO-END WORKFLOW (CHRONOLOGICAL WITH EMAILS)          -->
+  <!-- ===================================================================== -->
+  <section id="part1" class="section-panel active">
+    <div class="hero-banner">
+      <div>
+        <h2>Part 1｜從詢問到報價委任：完整主線流程（含各節點自動通知信）</h2>
+        <p>以基準案例 <b>CASE-01「折岸手帖（#0020 → INQ-20261116-007）」</b> 依時間軸完整展示前台諮詢、分派核對、專員評估至委任歸檔的每一步畫面與系統通知信。</p>
+      </div>
+    </div>
+
+    <!-- 5-Stage Process Roadmap matching Slide 10 -->
+    <div class="roadmap-bar">
+      <a class="road-card" href="#stage1">
+        <span class="road-num">1</span>
+        <span class="road-pill">前台諮詢</span>
+        <ul class="road-list">
+          <li>AI 整理追問</li>
+          <li>補充後送出</li>
+        </ul>
+      </a>
+      <a class="road-card" href="#stage2">
+        <span class="road-num">2</span>
+        <span class="road-pill">分派核對</span>
+        <ul class="road-list">
+          <li>主管分派改派</li>
+          <li>業務建立商機</li>
+        </ul>
+      </a>
+      <a class="road-card" href="#stage3">
+        <span class="road-num">3</span>
+        <span class="road-pill">專員評估</span>
+        <ul class="road-list">
+          <li>尼斯分類（1–45 類）</li>
+          <li>風險與報價</li>
+        </ul>
+      </a>
+      <a class="road-card" href="#stage4">
+        <span class="road-num">4</span>
+        <span class="road-pill">委任歸檔</span>
+        <ul class="road-list">
+          <li>上傳委任書</li>
+          <li>歸檔結案</li>
+        </ul>
+      </a>
+      <a class="road-card stage5" href="#feat4" onclick="switchToPart2('feat4')">
+        <span class="road-num">5</span>
+        <span class="road-pill">追蹤看板 →</span>
+        <ul class="road-list">
+          <li>跟進提醒</li>
+          <li>儀表板（見 Part 2）</li>
+        </ul>
+      </a>
+    </div>
+
+    <!-- STAGE 1: 前台諮詢 -->
+    <div id="stage1" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag">階段 1｜前台諮詢</span>
+          <h3>客戶前台諮詢進線、AI 結構化摘要與進線通知信</h3>
+        </div>
+        <span class="role-badge">客戶送出表單 → 系統自動通知主管</span>
+      </div>
+      <div class="stage-summary">
+        <b>時間序重點：</b>客戶以自然語言輸入品牌「折岸手帖」需求 → AI 自動拆解品牌、商品、國別並推論行業別為「文創出版」，同時將近似查詢與報價疑問標記轉交專業人員 → 客戶送出後產生流水號 <b>#0020</b>，系統即時發信通知主管登入分派。
+      </div>
+      <div class="media-grid cols-3">
+        <div class="media-card" data-file="01_intake-ai_case01-1.png" data-title="1-1｜客戶前台輸入自由文字需求" data-desc="客戶於第一步自由文字框輸入完整品牌需求、台灣申請意願與聯絡信箱 paper@example.com。"></div>
+        <div class="media-card" data-file="01_intake-ai_case01-2.png" data-title="1-2｜AI 自動生成結構化需求摘要與專業問題標記" data-desc="AI 拆解品牌與商品欄位、推論行業別「文創出版」，並將近似查詢與報價疑問標記轉交專業人員。"></div>
+        <div class="media-card mail-card" data-file="01_intake-ai_case01-3.png" data-title="1-3｜【自動通知信】新進諮詢單 #0020 待分派通知主管" data-desc="表單送出瞬間，系統自動寄信給主管（主管信箱），附帶 AI 摘要與後台直達連結。"></div>
+      </div>
+    </div>
+
+    <!-- STAGE 2: 分派核對 -->
+    <div id="stage2" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag">階段 2｜分派核對</span>
+          <h3>主管分派、業務核對建立商機與轉交商標評估</h3>
+        </div>
+        <span class="role-badge">主管分派 → 業務 A 建案 → 轉交商標專員 A</span>
+      </div>
+      <div class="stage-summary">
+        <b>時間序重點：</b>主管分派給業務 A（發信通知業務）→ 業務 A 核對資料建立正式商機（產生編號 <b>INQ-20261116-007</b>）→ 於個人視角商機看板檢視案件 → 點擊「轉交商標評估」指派給商標專員 A，系統隨即發信通知專員接手。
+      </div>
+      <div class="media-grid cols-3">
+        <div class="media-card" data-file="02_assign-opportunity_case01-1.png" data-title="2-1｜主管登入檢視 #0020 待分派諮詢單" data-desc="主管檢視 AI 整理摘要與專業人員待辦事項，選擇分派給「業務 A」。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-2.png" data-title="2-2｜主管完成分派即時確認提示" data-desc="系統確認已將諮詢單 #0020 指派給業務 A 並觸發通知。"></div>
+        <div class="media-card mail-card" data-file="02_assign-opportunity_case01-3.png" data-title="2-3｜【自動通知信】主管指派新諮詢單通知業務 A" data-desc="業務 A 收到指派通知信，載明諮詢流水號 #0020、品牌名稱與客戶行業別。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-4.png" data-title="2-4｜業務 A 核對資料並建立正式商機" data-desc="核對客戶資訊無誤後建立商機，自動帶入跟進日與下一步行動。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-5.png" data-title="2-5｜建立商機成功提示（進入待補資料）" data-desc="諮詢單正式轉入商機看板，產生標準商機編號 INQ-20261116-007。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-6.png" data-title="2-6｜商機看板個人視角（只看我負責的）" data-desc="業務 A 預設檢視本人負責案件（12 筆），以藍色粗體明確標示當前處理窗口。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-7.png" data-title="2-7｜點開商機詳情頁檢視三欄資訊" data-desc="左欄客戶原始資料唯讀存證，中欄由業務補充訪談細節。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-8.png" data-title="2-8｜業務點擊「轉交商標評估」指派專員" data-desc="選擇負責商標專員 A 並設定下一步交辦事項，準備推進階段。"></div>
+        <div class="media-card" data-file="02_assign-opportunity_case01-9.png" data-title="2-9｜階段推進「待專業評估」成功提示" data-desc="系統確認案件已推進至「待專業評估」並交接給商標專員 A。"></div>
+        <div class="media-card mail-card" data-file="02_assign-opportunity_case01-10.png" data-title="2-10｜【自動通知信】轉交商標專業評估通知專員 A" data-desc="商標專員 A 即時收到新評估任務通知信，直接點擊連結進入工作台。"></div>
+      </div>
+    </div>
+
+    <!-- STAGE 3: 專員評估 -->
+    <div id="stage3" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag green">階段 3｜專員評估</span>
+          <h3>商標專員 1–45 類尼斯快選、檢索報價與回報業務信</h3>
+        </div>
+        <span class="role-badge">商標專員 A 評估報價 → 系統通知業務追蹤</span>
+      </div>
+      <div class="stage-summary">
+        <b>時間序重點：</b>商標專員 A 登入後，左欄與中欄自動鎖定唯讀保護 → 透過動態錄影展示使用<b>尼斯分類快選</b>加入「第 16 類：紙製品、筆記本、文具及印刷品」並填寫報價 → 送出後階段推進為「已報價待回覆」，系統自動發信通知業務聯繫客戶簽約。
+      </div>
+      <div class="media-grid">
+        <div class="media-card" data-file="03_specialist-nice_case01-1.pdf" data-title="3-1｜商標專員 A 進入待專業評估詳情頁（三欄權限隔離）" data-desc="左欄客戶原始資料與中欄業務補充資訊皆為唯讀，專員僅能編輯右欄「商標專業評估」。"></div>
+        <div class="media-card" data-file="03_specialist-nice_case01-2.gif" data-title="3-2｜【動態錄影 GIF】尼斯分類（1–45 類）快選與報價填寫實機操作" data-desc="完整展示專員下拉點選第 16 類自動寫入類別明細，並填寫檢索與申請報價之流暢過程。"></div>
+        <div class="media-card" data-file="03_specialist-nice_case01-3.png" data-title="3-3｜完成檢索與報價確認視窗" data-desc="確認建議申請類別與報價明細後送出，階段推進為「已報價待回覆」。"></div>
+        <div class="media-card mail-card" data-file="03_specialist-nice_case01-4.png" data-title="3-4｜【自動通知信】專員已完成評估報價通知業務" data-desc="系統自動寄信通知負責業務：專員已完成檢索與報價，請向客戶報價並追蹤委任回覆。"></div>
+      </div>
+    </div>
+
+    <!-- STAGE 4: 委任歸檔 -->
+    <div id="stage4" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag purple">階段 4｜委任歸檔</span>
+          <h3>上傳委任書雲端歸檔、自動寄發客戶立案信與完整稽核紀錄</h3>
+        </div>
+        <span class="role-badge">業務上傳委任書 → 雲端歸檔 → 自動寄信客戶</span>
+      </div>
+      <div class="stage-summary">
+        <b>時間序重點：</b>客戶確認報價並簽回委任書 → 業務上傳 <code>委任書.jpg</code> 至共用 Google Drive 資料夾 → 階段自動推進為<b>「已委任」</b>並寄出正式受理立案通知信給客戶 → 詳情頁產生「檢視已存檔委任書 ↗」外開連結與完整系統更新紀錄。
+      </div>
+      <div class="media-grid cols-3">
+        <div class="media-card" data-file="04_engage-archive_case01-1.pdf" data-title="4-1｜「已報價待回覆」詳情頁準備上傳委任書" data-desc="頂部進度條顯示「上傳委任書並確認委任」，等待客戶簽署回傳。"></div>
+        <div class="media-card" data-file="04_engage-archive_case01-2.png" data-title="4-2｜上傳簽署委任書並確認委任視窗" data-desc="上傳 PDF/JPG/PNG（5MB 內）自動存入共用資料夾「第十組_宏景AI商標諮詢與商機管理」。"></div>
+        <div class="media-card" data-file="04_engage-archive_case01-3.png" data-title="4-3｜委任書歸檔與階段推進「已委任」提示" data-desc="系統確認委任書已存檔至雲端硬碟並同步發送確認信。"></div>
+        <div class="media-card mail-card" data-file="04_engage-archive_case01-4.png" data-title="4-4｜【自動通知信】客戶收到正式受理立案通知信" data-desc="客戶信箱收到含案件編號 INQ-20261116-007、負責業務與負責專員資訊之正式受理信。"></div>
+        <div class="media-card" data-file="04_engage-archive_case01-5.pdf" data-title="4-5｜最終「已委任」詳情頁、委任書外開與完整系統更新紀錄" data-desc="詳情頁出現「檢視已存檔委任書 ↗」按鈕，底部完整留存從建案、改派、報價至委任之每一步異動日誌。"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PART 2: 4 SPECIAL FEATURES & GOVERNANCE (05 ~ 09 IN EXACT ORDER)      -->
+  <!-- ===================================================================== -->
+  <section id="part2" class="section-panel">
+    <div class="hero-banner" style="border-left-color: var(--purple);">
+      <div>
+        <h2>Part 2｜系統四大核心亮點與階段 5 追蹤看板（05 ~ 09）</h2>
+        <p>依序展示多模態 Logo 辨識與雲端附件庫、拼字衝突動態追問、個人負責制唯讀鎖定、主管改派稽核與儀表板／延伸商機開發。</p>
+      </div>
+      <div class="quick-nav">
+        <a class="quick-chip" href="#feat1">亮點 1｜多模態看圖與 Drive 歸檔（05）</a>
+        <a class="quick-chip" href="#feat2">亮點 2｜拼字衝突與動態追問（06）</a>
+        <a class="quick-chip" href="#feat3">亮點 3｜本人負責制與主管改派（07–08）</a>
+        <a class="quick-chip" href="#feat4">亮點 4｜階段 5 儀表板與延伸商機（09）</a>
+      </div>
+    </div>
+
+    <!-- FEATURE 1: 05_亮點1_多模態看圖與Drive歸檔 (5 files in exact order) -->
+    <div id="feat1" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag">亮點一（05）</span>
+          <h3>多模態 Logo 視覺辨識、多元手動建案與 Google Drive 附件庫歸檔</h3>
+        </div>
+        <span class="role-badge">TEST-01（#0008 臻緻烘焙）＋ 手動建案（毛孩星球）＋ 雲端附件庫</span>
+      </div>
+      <div class="stage-summary">
+        <b>展示重點：</b>(1) 客戶僅上傳 Logo 圖檔（577 KB，自動檢核符合 TIPO 規格）未輸入品牌名，Gemini 多模態 AI 直接讀出圖中文字與構圖特徵；(2) 電話詢問案件亦支援後台手動建案並上傳初步 Logo；(3) 所有前台圖樣、手動建案圖檔與簽署委任書均自動統一歸檔至共用雲端資料夾<b>「宏景商標諮詢系統_附件庫」</b>。
+      </div>
+      <div class="media-grid cols-3">
+        <div class="media-card" data-file="05_h1-multimodal-drive_test01-1.png" data-title="05-1｜TEST-01 前台上傳圖檔與 TIPO 規格即時防呆" data-desc="限制 JPG/PNG 且 ≤2MB，上傳後即時顯示縮圖預覽與「PNG · 577 KB（符合 TIPO 格式）」提示。"></div>
+        <div class="media-card" data-file="05_h1-multimodal-drive_test01-2.pdf" data-title="05-2｜多模態 AI 自動讀出圖像特徵與品牌文字" data-desc="AI 直接從圖片辨識出「L'ATELIER DU PAIN 臻緻烘焙 PREMIUM BAKE」與「圓形徽章設計，金色線條風格，背景為深藍色」。"></div>
+        <div class="media-card" data-file="05_h1-multimodal-drive_test01-3.png" data-title="05-3｜後台詳情頁自動生成「檢視商標圖樣 ↗」外開連結" data-desc="完整呈現牛角麵包與打蛋器圖樣特徵描述，點擊按鈕即可直接檢視雲端原圖。"></div>
+        <div class="media-card" data-file="05_h1-multimodal-drive_manual-case.pdf" data-title="05-4｜多元進線通道：業務電話詢問手動建案上傳 Logo" data-desc="業務針對來電詢問之「毛孩星球 PET PLANET」直接於後台建檔，並上傳客戶提供之初步 Logo 圖檔。"></div>
+        <div class="media-card" data-file="05_h1-multimodal-drive_drive-folder.png" data-title="05-5｜共用 Google Drive「宏景商標諮詢系統_附件庫」集中歸檔" data-desc="前台諮詢圖樣、手動建案圖檔與客戶簽署委任書全部自動存入共用雲端資料夾統一管理，不拖垮試算表效能。"></div>
+      </div>
+    </div>
+
+    <!-- FEATURE 2: 06_亮點1_拼字衝突與動態追問 (CASE02-1 ~ CASE02-4) -->
+    <div id="feat2" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag green">亮點二（06）</span>
+          <h3>拼字衝突偵測、多地未定攔截與多輪動態追問（CASE-02）</h3>
+        </div>
+        <span class="role-badge">驗證案例：CASE-02（KAVORA vs KAVOLA 露營折疊椅）</span>
+      </div>
+      <div class="stage-summary">
+        <b>展示重點：</b>面對客戶原文同時出現「KAVORA」與「KAVOLA」且「台灣、香港都有在談但預算只夠做一地」的矛盾描述，系統<b>不盲目猜測填入</b>，而是保留空白並動態生成 6 題針對性追問；客戶逐題回答後自動拆解回填結構化欄位，並將近似法律疑問標記交由專業人員回覆。
+      </div>
+      <div class="media-grid">
+        <div class="media-card" data-file="06_h1-spelling-followup_case02-1.pdf" data-title="06-1｜CASE-02 偵測拼字衝突與多地未定，生成動態追問" data-desc="系統精準抓出 KAVORA 與 KAVOLA 拼字不一致及台灣/香港擇一問題，生成針對性追問清單。"></div>
+        <div class="media-card" data-file="06_h1-spelling-followup_case02-2.pdf" data-title="06-2｜客戶於追問框逐題補充確認資訊" data-desc="客戶確認申請 KAVORA、本次先評估臺灣，並補充預計 2027 年 2 月上市與聯絡信箱。"></div>
+        <div class="media-card" data-file="06_h1-spelling-followup_case02-3.pdf" data-title="06-3｜追問送出後自動拆解回填所有結構化欄位" data-desc="系統提示「目前資訊已相當完整」，自動將確認後的品牌名稱、諮詢國別與時程填入對應欄位。"></div>
+        <div class="media-card" data-file="06_h1-spelling-followup_case02-4.png" data-title="06-4｜預覽確認頁與專業法律疑問分流標記" data-desc="結構化摘要清楚呈現所有確認資訊，並將「是不是差一個字母就可以過？」標記轉交專業人員回覆。"></div>
+      </div>
+    </div>
+
+    <!-- FEATURE 3: 07 & 08 RBAC & REASSIGNMENT -->
+    <div id="feat3" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag purple">亮點三（07–08）</span>
+          <h3>個人帳密「本人負責制」唯讀鎖定與主管中途改派稽核（TEST-04）</h3>
+        </div>
+        <span class="role-badge">驗證案例：TEST-04（動態 GIF 實機操作 ＋ Audit Log 稽核）</span>
+      </div>
+      <div class="stage-summary">
+        <b>展示重點：</b>(1) <b>動態演示（07）</b>：以非本案負責業務之個人帳號登入點開案件時，前後端同步鎖定編輯權限並顯示唯讀橫幅；(2) <b>主管中途改派（08）</b>：主管將負責業務從「業務 A」改派為「業務 B」後，底部「系統更新紀錄」自動寫入操作者、時間與改前/改後值，確保內控可追溯。
+      </div>
+      <div class="media-grid">
+        <div class="media-card" data-file="07_h2-owner-lock.gif" data-title="07｜【動態錄影 GIF】本人負責制：非負責人員登入唯讀鎖定演示" data-desc="展示個人帳號登入驗證與點開非本人負責案件時，系統自動顯示唯讀模式並鎖定所有編輯按鈕。"></div>
+        <div class="media-card" data-file="08_h2-reassign-log_case01-9.pdf" data-title="08｜主管中途改派業務與系統更新紀錄（Audit Log）" data-desc="主管執行改派後，底部更新紀錄精準留存「2026-11-16 18:17:21 主管 負責業務：業務 A → 業務 B」。"></div>
+      </div>
+    </div>
+
+    <!-- FEATURE 4: 09 DASHBOARD & UPSELL (Upsell-1.pdf ~ Upsell-5.png) -->
+    <div id="feat4" class="stage-block">
+      <div class="stage-header">
+        <div class="stage-title-group">
+          <span class="step-tag amber">亮點四（09｜對應主流程階段 5 追蹤看板）</span>
+          <h3>主管儀表板動態 4/5 欄 KPI、AI 追蹤摘要與舊客延伸商機（Upsell）</h3>
+        </div>
+        <span class="role-badge">TEST-05 儀表板切換 ＋ 毛孩星球（INQ-20261116-001 → 002）</span>
+      </div>
+      <div class="stage-summary">
+        <b>展示重點：</b>(1) 儀表板「全體」視角顯示 <b>5 欄 KPI</b>（進行中 18 筆／累計 27 筆、成交率 22.2%、今日跟進、逾期預警、待分派諮詢）與 Gemini AI 追蹤摘要；切換「全商標」自動隱藏諮詢卡片切換為<b>等寬 4 欄排版</b>；(2)「待開發商機」自動撈取填有未來市場規劃之舊客（如「毛孩星球 PET PLANET」規劃新加坡、馬來西亞），達建議喚醒日即可一鍵建立延伸商機。
+      </div>
+      <div class="media-grid cols-3">
+        <div class="media-card" data-file="09_h3-dashboard-upsell-1.pdf" data-title="09-1｜儀表板（全體視角）：5 欄 KPI ＋ 國別熱度 ＋ Gemini 追蹤摘要" data-desc="呈現進行中 18 筆（累計 27 筆，5 階段總和完全吻合）、成交率 22.2%、跨國分布與 Gemini 今日逾期摘要。"></div>
+        <div class="media-card" data-file="09_h3-dashboard-upsell-2.pdf" data-title="09-2｜儀表板（全商標視角）：自動隱藏諮詢卡片並切換等寬 4 欄排版" data-desc="切換檢視對象為「全商標」時，系統自動隱藏第 5 張諮詢卡片並重算商標部門評估與報價階段指標。"></div>
+        <div class="media-card" data-file="09_h3-dashboard-upsell-3.pdf" data-title="09-3｜待開發商機（Upsell）：自動計算建議喚醒日（45／90 天規則）" data-desc="系統自動識別「毛孩星球 PET PLANET」預計擴張新加坡、馬來西亞，標示已達建議喚醒日並提供一鍵建案。"></div>
+        <div class="media-card" data-file="09_h3-dashboard-upsell-4.png" data-title="09-4｜一鍵建立延伸商機詳情頁（INQ-20261116-002）" data-desc="自動繼承原案商品、服務與 Logo 特徵，來源標記為「舊客延伸開發 · 延伸自 INQ-20261116-001」，諮詢國別帶入新加坡、馬來西亞。"></div>
+        <div class="media-card" data-file="09_h3-dashboard-upsell-5.png" data-title="09-5｜延伸案建立完成狀態與原案雙向關聯追蹤" data-desc="待開發卡片即時更新為「已建立延伸案：INQ-20261116-002」，支援一鍵跳轉檢視延伸商機或原案詳情。"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Full-Screen Lightbox Modal -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true">
+  <div class="lb-top">
+    <div id="lbTitle" class="lb-title">畫面檢視</div>
+    <div class="lb-btns">
+      <button type="button" class="lb-btn" id="lbPrev">← 上一張</button>
+      <button type="button" class="lb-btn" id="lbNext">下一張 →</button>
+      <button type="button" class="lb-btn" id="lbClose" style="background:#C53030;border-color:#FEB2B2">✕ 關閉（ESC）</button>
+    </div>
+  </div>
+  <div id="lbBody" class="lb-body"></div>
+  <div id="lbDesc" class="lb-desc"></div>
+</div>
+
+<script>
+  const VERIFIED_META = {
+    // Stage 1
+    "01_intake-ai_case01-1.png": {
+      tag: "階段 1｜前台諮詢（CASE01-1）",
+      summary: "客戶輸入：折岸紙品有限公司企劃小禾，預計 2027/1/15 台灣官網開賣空白筆記本、週計畫本，申請純文字「折岸手帖」，詢問近似查詢與檢索／申請費用（paper@example.com）。"
+    },
+    "01_intake-ai_case01-2.png": {
+      tag: "階段 1｜AI 摘要（CASE01-2）",
+      summary: "AI 需求摘要：品牌「折岸手帖」、商標圖樣「未提供（只申請文字）」、推論行業別「文創出版」、專業分流「客戶問近似查詢與報價，需交由專業人員確認」。"
+    },
+    "01_intake-ai_case01-3.png": {
+      tag: "階段 1｜自動通知信（CASE01-3）",
+      summary: "主旨：【宏景商標系統】新進商標諮詢待分派（#0020 折岸手帖），自動寄給主管並帶出商品／服務與推論行業別「文創出版」。"
+    },
+    // Stage 2
+    "02_assign-opportunity_case01-1.png": {
+      tag: "階段 2｜主管分派（CASE01-1）",
+      summary: "主管登入後台「待核對」檢視諮詢流水號 #0020（折岸手帖），確認 AI 摘要與專業人員待辦事項後，選擇「業務 A」進行分派。"
+    },
+    "02_assign-opportunity_case01-2.png": {
+      tag: "階段 2｜分派完成提示（CASE01-2）",
+      summary: "系統顯示已成功將諮詢單 #0020 指派給業務 A，並同步觸發指派通知信。"
+    },
+    "02_assign-opportunity_case01-3.png": {
+      tag: "階段 2｜自動通知信（CASE01-3）",
+      summary: "主旨：【宏景商標系統】指派新諮詢單待核對（#0020 折岸手帖），寄送給負責業務並附帶後台連結。"
+    },
+    "02_assign-opportunity_case01-4.png": {
+      tag: "階段 2｜業務建立商機（CASE01-4）",
+      summary: "業務 A 登入點擊「核對完成，建立商機」，系統自動帶入預設跟進日與下一步「與客戶初步確認需求細節，準備轉交商標評估」。"
+    },
+    "02_assign-opportunity_case01-5.png": {
+      tag: "階段 2｜商機建立完成（CASE01-5）",
+      summary: "系統產生正式商機編號 INQ-20261116-007，初始階段進入商機看板「待補資料」。"
+    },
+    "02_assign-opportunity_case01-6.png": {
+      tag: "階段 2｜商機看板個人視角（CASE01-6）",
+      summary: "業務 A 切換「只看我負責的（12）」個人視角，卡片清楚顯示商機編號、行業別標籤、藍色粗體處理窗口與跟進期限。"
+    },
+    "02_assign-opportunity_case01-7.png": {
+      tag: "階段 2｜商機詳情頁檢視（CASE01-7）",
+      summary: "三欄式工作台呈現客戶唯讀原始資料與業務補充欄位，準備轉交商標專業評估。"
+    },
+    "02_assign-opportunity_case01-8.png": {
+      tag: "階段 2｜轉交商標評估視窗（CASE01-8）",
+      summary: "業務選擇負責商標專員 A 並確認交辦事項，準備推進至下一階段。"
+    },
+    "02_assign-opportunity_case01-9.png": {
+      tag: "階段 2｜階段推進確認（CASE01-9）",
+      summary: "系統確認案件已推進為「待專業評估」並交接給商標專員 A。"
+    },
+    "02_assign-opportunity_case01-10.png": {
+      tag: "階段 2｜自動通知信（CASE01-10）",
+      summary: "系統自動寄信通知商標專員 A 接手評估 INQ-20261116-007（折岸手帖）。"
+    },
+    // Stage 3
+    "03_specialist-nice_case01-1.pdf": {
+      tag: "階段 3｜專員工作台（CASE01-1）",
+      summary: "商標專員 A 登入檢視待專業評估案件：左欄「客戶原始資料」與中欄「業務補充資訊」均鎖定為唯讀，確保原始需求不被竄改。"
+    },
+    "03_specialist-nice_case01-2.gif": {
+      tag: "階段 3｜動態錄影 GIF（CASE01-2）",
+      summary: "動態錄影實機演示：商標專員下拉快選尼斯分類「第 16 類：紙製品、筆記本、文具及印刷品」並填寫檢索報價。"
+    },
+    "03_specialist-nice_case01-3.png": {
+      tag: "階段 3｜完成檢索報價（CASE01-3）",
+      summary: "商標專員 A 於確認報價視窗填寫第 16 類與報價明細後送出，階段自動推進為「已報價待回覆」。"
+    },
+    "03_specialist-nice_case01-4.png": {
+      tag: "階段 3｜自動通知信（CASE01-4）",
+      summary: "系統自動寄信通知負責業務：專員已完成檢索與報價，請向客戶報價並追蹤委任回覆。"
+    },
+    // Stage 4
+    "04_engage-archive_case01-1.pdf": {
+      tag: "階段 4｜已報價待回覆（CASE01-1）",
+      summary: "詳情頁頂部進度按鈕顯示「上傳委任書並確認委任」，等待客戶簽署委任書回傳。"
+    },
+    "04_engage-archive_case01-2.png": {
+      tag: "階段 4｜上傳委任書（CASE01-2）",
+      summary: "上傳「委任書.jpg」至共用資料夾「第十組_宏景AI商標諮詢與商機管理」，確認存檔後階段推進為「已委任」。"
+    },
+    "04_engage-archive_case01-3.png": {
+      tag: "階段 4｜委任歸檔完成（CASE01-3）",
+      summary: "系統確認委任書已存檔至雲端硬碟並自動發送受理確認信給客戶。"
+    },
+    "04_engage-archive_case01-4.png": {
+      tag: "階段 4｜自動通知信（CASE01-4）",
+      summary: "主旨：【宏景商標事務所】已收到您的商標委任書，正式受理立案（案件編號：INQ-20261116-007），寄發給客戶留存。"
+    },
+    "04_engage-archive_case01-5.pdf": {
+      tag: "階段 4｜已委任閉環存證（CASE01-5）",
+      summary: "詳情頁頂部顯示「目前階段：已委任」與「檢視已存檔委任書 ↗」，底部「系統更新紀錄」完整留存全流程稽核日誌。"
+    },
+    // Feature 1 (05)
+    "05_h1-multimodal-drive_test01-1.png": {
+      tag: "亮點 1｜TIPO 規格防呆（TEST01-1）",
+      summary: "上傳 TEST-01.png（PNG · 577 KB），系統即時驗證格式與大小 ≤2MB（符合 TIPO 規格）並顯示縮圖預覽。"
+    },
+    "05_h1-multimodal-drive_test01-2.pdf": {
+      tag: "亮點 1｜多模態 AI 看圖（TEST01-2）",
+      summary: "Gemini 多模態模型直接從圖片辨識出「L'ATELIER DU PAIN 臻緻烘焙 PREMIUM BAKE」與「圓形徽章設計，金色線條風格，背景為深藍色」。"
+    },
+    "05_h1-multimodal-drive_test01-3.png": {
+      tag: "亮點 1｜後台外開圖樣（TEST01-3）",
+      summary: "後台詳情頁完整呈現牛角麵包與打蛋器圖樣特徵描述，並產生「檢視商標圖樣 ↗」按鈕連結共用 Google Drive 附件庫。"
+    },
+    "05_h1-multimodal-drive_manual-case.pdf": {
+      tag: "亮點 1｜手動建案上傳 Logo",
+      summary: "業務針對電話詢問之「毛孩星球 PET PLANET」直接於後台建檔，並上傳客戶提供之初步 Logo 圖檔自動存入共用資料夾。"
+    },
+    "05_h1-multimodal-drive_drive-folder.png": {
+      tag: "亮點 1｜Google Drive 附件庫歸檔",
+      summary: "共用資料夾「宏景商標諮詢系統_附件庫」集中存放所有前台圖樣、手動建案圖檔與簽署委任書，確保檔案長期保存且不拖慢資料庫。"
+    },
+    // Feature 2 (06)
+    "06_h1-spelling-followup_case02-1.pdf": {
+      tag: "亮點 2｜衝突偵測追問（CASE02-1）",
+      summary: "偵測文中同時出現 KAVORA 與 KAVOLA 且台灣、香港預算只夠做一地，保留空白並生成 6 題針對性動態追問。"
+    },
+    "06_h1-spelling-followup_case02-2.pdf": {
+      tag: "亮點 2｜多輪互動回答（CASE02-2）",
+      summary: "客戶依序回答拼字確認「KAVORA」、優先申請「臺灣」、上市時程「預計 2027 年 2 月上市」與聯絡信箱。"
+    },
+    "06_h1-spelling-followup_case02-3.pdf": {
+      tag: "亮點 2｜結構化回填（CASE02-3）",
+      summary: "追問送出後系統確認資訊已相當完整，自動將確認後的品牌名稱、諮詢國別與時程填入對應欄位。"
+    },
+    "06_h1-spelling-followup_case02-4.png": {
+      tag: "亮點 2｜預覽摘要與分流（CASE02-4）",
+      summary: "結構化需求摘要清楚列出確認欄位，並將「是不是差一個字母就可以過？」標記轉交專業人員回覆。"
+    },
+    // Feature 3 (07-08)
+    "07_h2-owner-lock.gif": {
+      tag: "亮點 3｜動態演示 GIF（07）",
+      summary: "以非本案負責業務之個人帳號登入點開案件，系統即時顯示「唯讀檢視模式」橫幅並鎖定所有編輯按鈕。"
+    },
+    "08_h2-reassign-log_case01-9.pdf": {
+      tag: "亮點 3｜主管改派稽核（08）",
+      summary: "主管將負責業務由「業務 A」改派為「業務 B」，系統更新紀錄自動寫入「2026-11-16 18:17:21 主管 負責業務：業務 A → 業務 B」。"
+    },
+    // Feature 4 (09)
+    "09_h3-dashboard-upsell-1.pdf": {
+      tag: "亮點 4｜儀表板全體視角（09-1）",
+      summary: "進行中商機 18 筆（累計 27 筆，五階段總和完全一致）、已委任成交率 22.2%（6 筆）、跨國布局熱度與 Gemini AI 追蹤摘要。"
+    },
+    "09_h3-dashboard-upsell-2.pdf": {
+      tag: "亮點 4｜儀表板全商標視角（09-2）",
+      summary: "切換檢視對象為「全商標」時，系統自動隱藏第 5 張諮詢單卡片並切換為等寬 4 欄排版，數據即時重算。"
+    },
+    "09_h3-dashboard-upsell-3.pdf": {
+      tag: "亮點 4｜待開發延伸商機（09-3）",
+      summary: "自動撈取「毛孩星球 PET PLANET（原案 INQ-20261116-001）」預計擴張新加坡、馬來西亞，標示已達建議喚醒日並提供一鍵建立延伸商機。"
+    },
+    "09_h3-dashboard-upsell-4.png": {
+      tag: "亮點 4｜延伸商機詳情頁（09-4）",
+      summary: "一鍵建立延伸案 INQ-20261116-002（來源：舊客延伸開發 · 延伸自 INQ-20261116-001），自動繼承商品、服務與圖樣特徵。"
+    },
+    "09_h3-dashboard-upsell-5.png": {
+      tag: "亮點 4｜延伸案關聯確認（09-5）",
+      summary: "待開發卡片即時顯示「已建立延伸案：INQ-20261116-002」，支援一鍵跳轉檢視延伸商機或原案詳情。"
+    }
+  };
+
+  const localBlobMap = {};
+  let allCards = [];
+  let currentLbIndex = 0;
+
+  function getFileExtType(filename) {
+    const lower = filename.toLowerCase();
+    if (lower.endsWith('.gif')) return 'gif';
+    if (lower.endsWith('.pdf')) return 'pdf';
+    return 'png';
+  }
+
+  function renderCard(card, idx) {
+    const file = card.dataset.file;
+    const title = card.dataset.title;
+    const desc = card.dataset.desc;
+    const ftype = getFileExtType(file);
+    const meta = VERIFIED_META[file] || { tag: "系統實機存證", summary: desc };
+    const srcUrl = localBlobMap[file] || ('./' + encodeURI(file));
+
+    card.innerHTML = `
+      <div class="media-card-top">
+        <span class="cap-title">${title}</span>
+        <span class="file-type-tag ${ftype}">${ftype.toUpperCase()}</span>
+      </div>
+      <div class="media-viewport" data-idx="${idx}"></div>
+      <div class="media-caption">${desc}</div>
+    `;
+
+    const vp = card.querySelector('.media-viewport');
+    vp.onclick = () => openLightbox(idx);
+
+    if (ftype === 'pdf') {
+      if (localBlobMap[file]) {
+        vp.innerHTML = `<iframe src="${srcUrl}#toolbar=0&navpanes=0&view=FitH" title="${title}"></iframe><span class="zoom-hint">點擊滿版檢視 PDF ↗</span>`;
+      } else {
+        vp.innerHTML = buildFallbackHtml(file, meta);
+      }
+    } else {
+      const img = document.createElement('img');
+      img.alt = title;
+      img.src = srcUrl;
+      img.onload = () => {
+        const hint = document.createElement('span');
+        hint.className = 'zoom-hint';
+        hint.textContent = ftype === 'gif' ? 'GIF 動態播放中｜點擊放大 ↗' : '點擊放大檢視 ↗';
+        vp.appendChild(hint);
+      };
+      img.onerror = () => {
+        vp.innerHTML = buildFallbackHtml(file, meta);
+      };
+      vp.appendChild(img);
+    }
+  }
+
+  function buildFallbackHtml(filename, meta) {
+    return `
+      <div class="snapshot-fallback">
+        <div>
+          <span class="snap-badge">✓ ${meta.tag}</span>
+          <div class="snap-kv">${meta.summary}</div>
+        </div>
+        <div class="snap-foot">
+          <span>對應檔名：<code>${filename}</code></span>
+          <span>🔍 點擊檢視</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function initAllCards() {
+    allCards = Array.from(document.querySelectorAll('.media-card'));
+    allCards.forEach((c, i) => renderCard(c, i));
+  }
+
+  function switchToPart2(anchorId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="part2"]').classList.add('active');
+    document.getElementById('part2').classList.add('active');
+    if (anchorId) {
+      setTimeout(() => {
+        const target = document.getElementById(anchorId);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }, 60);
+    }
+  }
+
+  // Tab Switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  });
+
+  // Local Multi-File Picker (maps files by exact filename)
+  document.getElementById('folderPicker').onchange = function (e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    let matched = 0;
+    files.forEach(f => {
+      localBlobMap[f.name] = URL.createObjectURL(f);
+      if (VERIFIED_META[f.name]) matched++;
+    });
+    const st = document.getElementById('loadStatus');
+    st.textContent = `已載入 ${files.length} 個檔案（成功匹配 ${matched} 張展示畫面）`;
+    st.classList.add('ready');
+    initAllCards();
+  };
+
+  // Lightbox Controls
+  const lb = document.getElementById('lightbox');
+  const lbBody = document.getElementById('lbBody');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbDesc = document.getElementById('lbDesc');
+
+  function openLightbox(idx) {
+    currentLbIndex = (idx + allCards.length) % allCards.length;
+    const card = allCards[currentLbIndex];
+    const file = card.dataset.file;
+    const title = card.dataset.title;
+    const desc = card.dataset.desc;
+    const ftype = getFileExtType(file);
+    const meta = VERIFIED_META[file] || { tag: "系統實機存證", summary: desc };
+    const srcUrl = localBlobMap[file] || ('./' + encodeURI(file));
+
+    lbTitle.textContent = `(${currentLbIndex + 1} / ${allCards.length}) ${title}`;
+    lbDesc.textContent = desc;
+    lbBody.innerHTML = '';
+
+    if (ftype === 'pdf') {
+      if (localBlobMap[file]) {
+        lbBody.innerHTML = `<iframe src="${srcUrl}#view=FitH" title="${title}"></iframe>`;
+      } else {
+        lbBody.innerHTML = `<div style="max-width:720px;width:100%">${buildFallbackHtml(file, meta)}</div>`;
+      }
+    } else {
+      const img = document.createElement('img');
+      img.src = srcUrl;
+      img.alt = title;
+      img.onerror = () => {
+        lbBody.innerHTML = `<div style="max-width:720px;width:100%">${buildFallbackHtml(file, meta)}</div>`;
+      };
+      lbBody.appendChild(img);
+    }
+    lb.classList.add('open');
+  }
+
+  document.getElementById('lbClose').onclick = () => lb.classList.remove('open');
+  document.getElementById('lbPrev').onclick = () => openLightbox(currentLbIndex - 1);
+  document.getElementById('lbNext').onclick = () => openLightbox(currentLbIndex + 1);
+  lb.onclick = (e) => { if (e.target === lb) lb.classList.remove('open'); };
+
+  document.addEventListener('keydown', (e) => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') lb.classList.remove('open');
+    if (e.key === 'ArrowLeft') openLightbox(currentLbIndex - 1);
+    if (e.key === 'ArrowRight') openLightbox(currentLbIndex + 1);
+  });
+
+  initAllCards();
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+/*
+ * 白底淡粉主題設計 token（v8：純白基底＋極淡粉；單一玫瑰色 #A84870 作為重點色；資料語意色不變）
+ * 品牌基底：淡粉 #F8E6EA（面板、暈染）、玫瑰 #A84870（主要按鈕、重點數字）、深炭灰 #33303A（晶圓觀測窗）、灰 #6E6670（次要文字）；頁面底純白。
+ * 字體：全部使用思源黑體（Noto Sans TC）。
+ * 三層：ref（原始色，只在本檔）→ sys（語意角色）→ 元件只用 sys。
+ * 對比規則（WCAG 2.1 AA）：
+ *  - 文字（*-ink、text-*）在 page／card／surface-alt 上皆 ≥ 4.5:1。
+ *  - Dream 原色只用於暈染、分隔、hover；不放小字。灰玫瑰文字不放在淡粉底上（未達 AA），
+ *    在淡粉底上改用 text-on-mist #5E5560。
+ *  - 圖形標記（*-mark）需搭配文字或提示，不單靠顏色。
+ *  - space-* 只用在深色觀測窗內。
+ */
+:root {
+  /* ---------- ref ---------- */
+  --ref-dream: #F8E6EA;          /* 參考色票 Dream */
+  --ref-cloud: #6E6670;          /* 參考色票 Cloud */
+  --ref-page: #FFFFFF;
+  --ref-mist-soft: #FDF6F7;      /* Dream 與白色 50% 混合，卡片次要底色 */
+  --ref-dream-tint: #FBEFF1;     /* v5.1 Dream 與白色 75% 混合：收斂第 3 階、決策卡漸層終點 */
+  --ref-white: #FFFFFF;
+  --ref-ink: #2B2730;
+  --ref-ink-on-mist: #5E5560;
+  --ref-border-soft: #F1E1E6;
+  --ref-cosmic-deep: #33303A;
+  --ref-cosmic-mid: #A84870;
+  --ref-accent-dream: #EBC3CF;
+  --ref-link: #8E3A5E;
+
+  /* ---------- sys：頁面與表面 ---------- */
+  --bg-page: var(--ref-page);
+  --bg-mist: var(--ref-dream);
+  --bg-card: var(--ref-white);
+  --ink-primary: var(--ref-ink);
+  --ink-secondary: var(--ref-cloud);
+  --border-soft: var(--ref-border-soft);
+  --cosmic-deep: var(--ref-cosmic-deep);
+  --cosmic-mid: var(--ref-cosmic-mid);
+  --accent-dream: var(--ref-accent-dream);
+
+  --color-bg-page: var(--bg-page);
+  --color-bg-surface: var(--bg-card);
+  --color-bg-surface-alt: var(--ref-mist-soft);
+  --color-dream-tint: var(--ref-dream-tint);
+  --color-bg-mist: var(--bg-mist);
+  --color-bg-surface-glass: rgba(255, 255, 255, 0.84);
+  --color-border-subtle: var(--border-soft);
+  --color-border-strong: var(--ref-cloud);          /* UI 元件邊界 5.66:1 */
+
+  /* ---------- sys：文字 ---------- */
+  --color-text-primary: var(--ink-primary);
+  --color-text-secondary: var(--ink-secondary);
+  --color-text-muted: var(--ink-secondary);
+  --color-text-on-mist: var(--ref-ink-on-mist);
+  --color-text-link: var(--ref-link);
+  --color-focus-ring: var(--ref-link);
+
+  /* ---------- sys：品牌角色 ---------- */
+  --color-cosmic: var(--cosmic-mid);                /* 主要按鈕、強調；白字 6.73:1 */
+  --color-cosmic-hover: #8E3A5E;
+  --color-orbit-mark: var(--accent-dream);
+  --color-orbit-ink: var(--ref-link);
+  --color-signal-mark: var(--accent-dream);
+  --color-signal-ink: var(--cosmic-mid);
+  --color-signal-bg: var(--ref-mist-soft);
+  --color-violet-mark: #E0A9BC;
+  --color-violet-ink: var(--cosmic-mid);
+  --color-violet-bg: var(--ref-mist-soft);
+
+  /* ---------- sys：資料語意色（不可被品牌色取代） ---------- */
+  /* 正式候選：金色 */
+  --color-decision-mark: #9E7C10;  --color-decision-ink: #6B5108;  --color-decision-bg: #FAF3DC;
+  /* 責任資訊待補：琥珀色 */
+  --color-duty-mark: #D07A1E;      --color-duty-ink: #8A4105;      --color-duty-bg: #FCEBDD;
+  /* 風險分流 */
+  --color-risk-red-mark: #C74452;    --color-risk-red-ink: #A8323F;    --color-risk-red-bg: #FBECEE;
+  --color-risk-yellow-mark: #A96F12; --color-risk-yellow-ink: #7E5208; --color-risk-yellow-bg: #FBF1DF;
+  --color-risk-green-mark: #25845A;  --color-risk-green-ink: #1D6B48;  --color-risk-green-bg: #E5F4EC;
+  /* 待查證：灰紫 */
+  --color-risk-pending-mark: #7C7F9C; --color-risk-pending-ink: #4E5170; --color-risk-pending-bg: #ECEDF5;
+
+  /* ---------- sys：深色觀測窗 ---------- */
+  --color-space-bg: #2C2932;
+  --color-space-bg-2: var(--cosmic-deep);
+  --color-space-raised: #3E3A46;
+  --color-space-line: rgba(217, 209, 218, 0.14);
+  --color-space-line-strong: rgba(217, 209, 218, 0.34);
+  --color-space-text: #F7F3F6;
+  --color-space-text-2: #D9D1DA;
+  --color-space-red: #FF8A95; --color-space-yellow: #F4C35A; --color-space-green: #5FD6A2; --color-space-pending: #B9BCD6;
+  --color-space-cyan: var(--accent-dream); --color-space-amber: #F0C24B; --color-space-violet: var(--accent-dream);
+
+
+  /* ---------- sys：透明度層（v5：所有半透明色都登記為 token） ---------- */
+  --color-mist-cloud: rgba(248, 230, 234, 0.95);      /* Dream 雲霧暈染（強） */
+  --color-mist-cloud-soft: rgba(248, 230, 234, 0.6);  /* Dream 雲霧暈染（弱） */
+  --color-mist-veil: rgba(248, 230, 234, 0.45);       /* Dream 薄霧（區塊交替、hover） */
+  --color-space-glass-1: rgba(247, 243, 246, 0.06);
+  --color-space-glass-2: rgba(247, 243, 246, 0.08);
+  --color-space-glass-3: rgba(247, 243, 246, 0.13);
+  --color-space-glass-4: rgba(247, 243, 246, 0.16);
+  --color-space-glass-5: rgba(247, 243, 246, 0.28);
+  --color-wafer-body: rgba(235, 195, 207, 0.18);
+  --color-orbit-line: rgba(235, 195, 207, 0.55);
+  --color-nebula: rgba(235, 195, 207, 0.18);
+  --color-die-cell: rgba(217, 209, 218, 0.2);
+  --color-pending-hatch-bg: rgba(185, 188, 214, 0.16);
+  --color-scan: var(--accent-dream);
+  --color-overlay: rgba(51, 48, 58, 0.4);
+  --color-shadow-strong: rgba(51, 48, 58, 0.28);
+  --color-white: #FFFFFF;
+
+  /* ---------- type ---------- */
+  --font-display: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-ui: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-data: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;   /* v8：數字也用思源黑體，搭配 tabular-nums 對齊 */
+  /* v6：整體字級放大約 6%，閱讀更舒展 */
+  --text-xs: 0.8rem; --text-sm: 0.9375rem; --text-md: 1.0625rem; --text-lg: 1.1875rem;
+  --text-xl: 1.45rem; --text-2xl: 1.95rem; --text-3xl: 2.4rem; --text-4xl: 3rem;
+
+  /* ---------- space & shape ---------- */
+  /* v6：間距放大，區塊之間留白更多 */
+  --space-1: 4px; --space-2: 10px; --space-3: 14px; --space-4: 20px; --space-5: 28px;
+  --space-6: 36px; --space-7: 48px; --space-8: 80px; --space-9: 96px; --space-10: 120px;
+  --radius-sm: 6px; --radius-md: 12px; --radius-lg: 20px; --radius-xl: 28px; --radius-pill: 999px;
+  --shadow-soft: 0 1px 2px rgba(51, 48, 58, 0.04), 0 10px 28px rgba(168, 72, 112, 0.08);
+  --shadow-window: 0 24px 60px rgba(51, 48, 58, 0.24);
+
+  /* ---------- motion ---------- */
+  --dur-feedback: 160ms;  --dur-state: 280ms;  --dur-narrative: 700ms;  --dur-intro-total: 2600ms;
+  --ease-standard: cubic-bezier(.2, .7, .2, 1);  --ease-draw: cubic-bezier(.45, 0, .2, 1);
+}
